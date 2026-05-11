@@ -8,6 +8,8 @@
     document_reference: null,
     unsubscribe: null,
     set_doc: null,
+    get_doc: null,
+    on_snapshot: null,
     last_remote_session: null
   };
 
@@ -42,20 +44,10 @@
     }
 
     try {
-      const firebase = await loadFirebase();
-      const config = getOnlineConfig();
-      const app = firebase.initializeApp(config.firebase_config);
-      const firestore = firebase.getFirestore(app);
-      const documentReference = firebase.doc(firestore, config.room_path);
+      const onlineRoom = await ensureOnlineRoom();
 
-      onlineState.enabled = true;
-      onlineState.ready = true;
-      onlineState.firestore = firestore;
-      onlineState.document_reference = documentReference;
-      onlineState.set_doc = firebase.setDoc;
-
-      await firebase.setDoc(
-        documentReference,
+      await onlineRoom.firebase.setDoc(
+        onlineRoom.document_reference,
         {
           room_id: options.room_id,
           session: options.initial_session,
@@ -64,8 +56,8 @@
         { merge: true }
       );
 
-      onlineState.unsubscribe = firebase.onSnapshot(
-        documentReference,
+      onlineState.unsubscribe = onlineRoom.firebase.onSnapshot(
+        onlineRoom.document_reference,
         function (snapshot) {
           const data = snapshot.data();
 
@@ -86,6 +78,52 @@
       options.onStatus(`Online indisponivel: ${error.message}`);
       console.error(error);
     }
+  }
+
+  /**
+   * Loads the room configuration saved online.
+   *
+   * @returns {Promise<object|null>} Online room config or null.
+   */
+  async function loadOnlineRoomConfig() {
+    if (!isOnlineSyncEnabled()) {
+      return null;
+    }
+
+    const onlineRoom = await ensureOnlineRoom();
+    const snapshot = await onlineRoom.firebase.getDoc(onlineRoom.document_reference);
+    const data = snapshot.exists() ? snapshot.data() : null;
+
+    return data && data.config ? data.config : null;
+  }
+
+  /**
+   * Saves the room configuration online.
+   *
+   * @param {string} roomId - Room identifier.
+   * @param {object} roomSettings - Room settings.
+   * @param {object} themeSettings - Theme settings.
+   * @returns {Promise<void>} Resolves after Firestore accepts the write.
+   */
+  async function saveOnlineRoomConfig(roomId, roomSettings, themeSettings) {
+    if (!isOnlineSyncEnabled()) {
+      return;
+    }
+
+    const onlineRoom = await ensureOnlineRoom();
+
+    await onlineRoom.firebase.setDoc(
+      onlineRoom.document_reference,
+      {
+        room_id: roomId,
+        config: {
+          room_settings: roomSettings,
+          theme_settings: themeSettings
+        },
+        config_updated_at: new Date().toISOString()
+      },
+      { merge: true }
+    );
   }
 
   /**
@@ -139,6 +177,45 @@
   }
 
   /**
+   * Initializes Firebase once and keeps the shared room document reference.
+   *
+   * @returns {Promise<object>} Firebase helpers and room document reference.
+   */
+  async function ensureOnlineRoom() {
+    if (onlineState.ready && onlineState.document_reference) {
+      return {
+        firebase: {
+          setDoc: onlineState.set_doc,
+          getDoc: onlineState.get_doc,
+          onSnapshot: onlineState.on_snapshot
+        },
+        document_reference: onlineState.document_reference
+      };
+    }
+
+    const firebase = await loadFirebase();
+    const config = getOnlineConfig();
+    const app = firebase.getApps().length > 0 ?
+      firebase.getApp() :
+      firebase.initializeApp(config.firebase_config);
+    const firestore = firebase.getFirestore(app);
+    const documentReference = firebase.doc(firestore, config.room_path);
+
+    onlineState.enabled = true;
+    onlineState.ready = true;
+    onlineState.firestore = firestore;
+    onlineState.document_reference = documentReference;
+    onlineState.set_doc = firebase.setDoc;
+    onlineState.get_doc = firebase.getDoc;
+    onlineState.on_snapshot = firebase.onSnapshot;
+
+    return {
+      firebase: firebase,
+      document_reference: documentReference
+    };
+  }
+
+  /**
    * Loads Firebase modules from the official CDN.
    *
    * @returns {Promise<object>} Firebase helpers.
@@ -155,8 +232,11 @@
 
     return {
       initializeApp: appModule.initializeApp,
+      getApp: appModule.getApp,
+      getApps: appModule.getApps,
       getFirestore: firestoreModule.getFirestore,
       doc: firestoreModule.doc,
+      getDoc: firestoreModule.getDoc,
       onSnapshot: firestoreModule.onSnapshot,
       setDoc: firestoreModule.setDoc
     };
@@ -165,6 +245,8 @@
   window.BingoOnline = {
     getOnlinePlayerId: getOnlinePlayerId,
     isOnlineSyncEnabled: isOnlineSyncEnabled,
+    loadOnlineRoomConfig: loadOnlineRoomConfig,
+    saveOnlineRoomConfig: saveOnlineRoomConfig,
     saveOnlineRoomSession: saveOnlineRoomSession,
     startOnlineRoom: startOnlineRoom
   };

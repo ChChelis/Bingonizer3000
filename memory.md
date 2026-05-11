@@ -419,6 +419,49 @@ Observação:
 
 ---
 
+# Camada Online Atual
+
+Foi iniciado o multiplayer real com Firebase Firestore.
+
+## Firestore
+
+Documento usado:
+
+```text
+rooms/sample_room_001
+```
+
+Campos principais:
+
+```text
+config.room_settings
+config.theme_settings
+session
+```
+
+## O que sincroniza online
+
+- configuração publicada da sala;
+- tema publicado da sala;
+- rodada atual;
+- número sorteado atual;
+- histórico de números sorteados;
+- jogadores que já conferiram;
+- timer compartilhado.
+
+## O que ainda é local
+
+- cartela de cada jogador;
+- marcações de cada jogador;
+- histórico local de vitórias;
+- imagens enviadas pelo navegador quando forem grandes demais para Firestore.
+
+Observação:
+
+Para que novos jogadores recebam a configuração personalizada, o configurador precisa salvar a configuração uma vez depois da versão com sincronização de `config` estar publicada. Antes disso, o Firestore tinha apenas `session`, então navegadores novos usavam o JSON base.
+
+---
+
 # Filosofia do Projeto
 
 O projeto deve:

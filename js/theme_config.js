@@ -39,8 +39,15 @@ async function initializeThemeConfigurator() {
   try {
     const roomConfig = await loadJsonFile("data/sample_room.json");
     const itemsData = await loadJsonFile(roomConfig.data_source.items_file);
-    const savedRoomSettings = loadLocalRoomSettings(roomConfig.room_id);
-    const savedTheme = loadLocalThemeSettings(roomConfig.room_id);
+    const onlineRoomConfig = await loadOnlineRoomConfigIfAvailable();
+    const savedRoomSettings =
+      onlineRoomConfig && onlineRoomConfig.room_settings ?
+        onlineRoomConfig.room_settings :
+        loadLocalRoomSettings(roomConfig.room_id);
+    const savedTheme =
+      onlineRoomConfig && onlineRoomConfig.theme_settings ?
+        onlineRoomConfig.theme_settings :
+        loadLocalThemeSettings(roomConfig.room_id);
 
     themeConfigState.room_id = roomConfig.room_id;
     themeConfigState.base_room_settings = getEditableRoomSettings(
@@ -63,7 +70,11 @@ async function initializeThemeConfigurator() {
     bindThemeConfiguratorEvents();
     applyRoomTheme(themeConfigState.current_theme);
     updateRoomPreview();
-    updateConfigStatus("Configuracao carregada. O preview de tema muda em tempo real.");
+    updateConfigStatus(
+      onlineRoomConfig ?
+        "Configuracao online carregada. O preview de tema muda em tempo real." :
+        "Configuracao carregada. O preview de tema muda em tempo real."
+    );
   } catch (error) {
     updateConfigStatus(error.message);
     console.error(error);
@@ -389,18 +400,72 @@ function handleConfigSave(event) {
   event.preventDefault();
 
   try {
-    saveLocalRoomSettings(
-      themeConfigState.room_id,
-      normalizeContentModeSettings(themeConfigState.current_room_settings)
+    const normalizedRoomSettings = normalizeContentModeSettings(
+      themeConfigState.current_room_settings
     );
+
+    saveLocalRoomSettings(themeConfigState.room_id, normalizedRoomSettings);
     saveLocalThemeSettings(themeConfigState.room_id, themeConfigState.current_theme);
     updateConfigStatus("Configuracao salva localmente. Recarregue o jogo para aplicar.");
+    saveOnlineRoomConfigIfAvailable(
+      normalizedRoomSettings,
+      themeConfigState.current_theme
+    );
   } catch (error) {
     updateConfigStatus(
       "Nao foi possivel salvar. Reduza a quantidade ou o tamanho das imagens."
     );
     console.error(error);
   }
+}
+
+/**
+ * Loads online room configuration when available.
+ *
+ * @returns {Promise<object|null>} Online room config or null.
+ */
+async function loadOnlineRoomConfigIfAvailable() {
+  if (
+    !window.BingoOnline ||
+    !window.BingoOnline.isOnlineSyncEnabled() ||
+    !window.BingoOnline.loadOnlineRoomConfig
+  ) {
+    return null;
+  }
+
+  try {
+    return await window.BingoOnline.loadOnlineRoomConfig();
+  } catch (error) {
+    console.warn("Could not load online room config:", error);
+    return null;
+  }
+}
+
+/**
+ * Saves room configuration online when Firestore sync is enabled.
+ *
+ * @param {object} roomSettings - Room settings.
+ * @param {object} themeSettings - Theme settings.
+ */
+function saveOnlineRoomConfigIfAvailable(roomSettings, themeSettings) {
+  if (
+    !window.BingoOnline ||
+    !window.BingoOnline.isOnlineSyncEnabled() ||
+    !window.BingoOnline.saveOnlineRoomConfig
+  ) {
+    return;
+  }
+
+  window.BingoOnline.saveOnlineRoomConfig(
+    themeConfigState.room_id,
+    roomSettings,
+    themeSettings
+  ).then(function () {
+    updateConfigStatus("Configuracao salva localmente e online.");
+  }).catch(function (error) {
+    updateConfigStatus("Configuracao local salva, mas o envio online falhou.");
+    console.error(error);
+  });
 }
 
 /**

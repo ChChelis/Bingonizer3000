@@ -21,9 +21,16 @@ async function initializeApp() {
   try {
     const roomConfig = await loadJsonFile("data/sample_room.json");
     const itemsData = await loadJsonFile(roomConfig.data_source.items_file);
+    const onlineRoomConfig = await loadOnlineRoomConfigIfAvailable();
 
-    const localRoomSettings = loadRoomSettings(roomConfig.room_id);
-    const localThemeSettings = loadThemeSettings(roomConfig.room_id);
+    const localRoomSettings =
+      onlineRoomConfig && onlineRoomConfig.room_settings ?
+        onlineRoomConfig.room_settings :
+        loadRoomSettings(roomConfig.room_id);
+    const localThemeSettings =
+      onlineRoomConfig && onlineRoomConfig.theme_settings ?
+        onlineRoomConfig.theme_settings :
+        loadThemeSettings(roomConfig.room_id);
 
     applyRoomSettingsOverride(roomConfig, localRoomSettings);
 
@@ -52,6 +59,28 @@ async function initializeApp() {
     startGame(roomConfig, playableItems);
   } catch (error) {
     showFatalError(error);
+  }
+}
+
+/**
+ * Loads online room configuration when Firestore sync is enabled.
+ *
+ * @returns {Promise<object|null>} Online room config or null.
+ */
+async function loadOnlineRoomConfigIfAvailable() {
+  if (
+    !window.BingoOnline ||
+    !window.BingoOnline.isOnlineSyncEnabled() ||
+    !window.BingoOnline.loadOnlineRoomConfig
+  ) {
+    return null;
+  }
+
+  try {
+    return await window.BingoOnline.loadOnlineRoomConfig();
+  } catch (error) {
+    console.warn("Could not load online room config:", error);
+    return null;
   }
 }
 

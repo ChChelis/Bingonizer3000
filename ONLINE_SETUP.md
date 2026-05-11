@@ -6,6 +6,8 @@ Para sincronizar uma sala numerica entre computadores diferentes, configure Fire
 
 ## O que sincroniza nesta primeira camada
 
+- configuracao publicada da sala;
+- tema publicado da sala;
 - rodada atual;
 - numero sorteado atual;
 - historico de numeros sorteados;
@@ -13,6 +15,20 @@ Para sincronizar uma sala numerica entre computadores diferentes, configure Fire
 - timer compartilhado para a proxima rodada.
 
 As cartelas e marcacoes ainda ficam locais em cada navegador.
+
+Quando uma configuracao e salva no configurador, o documento da sala recebe um campo `config`.
+O jogo le esse campo primeiro; se ele nao existir, usa os JSONs base e o `localStorage` do navegador.
+
+Estrutura principal no Firestore:
+
+```text
+rooms/sample_room_001
+  config.room_settings
+  config.theme_settings
+  session
+```
+
+Observacao: imagens submetidas pelo navegador ainda nao sao uma solucao online definitiva. Para compartilhar imagens grandes entre usuarios, o proximo passo tecnico sera Firebase Storage.
 
 ## Configuracao
 

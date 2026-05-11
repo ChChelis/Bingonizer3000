@@ -2,6 +2,7 @@ const cellConfigState = {
   room_id: null,
   base_room_settings: {},
   current_room_settings: {},
+  source_room_settings: {},
   current_theme: {}
 };
 
@@ -15,8 +16,15 @@ async function initializeCellConfigurator() {
     const loadedData = await loadCellConfigData();
     const roomConfig = loadedData.room_config;
     const items = loadedData.items;
-    const savedRoomSettings = loadLocalRoomSettings(roomConfig.room_id);
-    const savedTheme = loadLocalThemeSettings(roomConfig.room_id);
+    const onlineRoomConfig = await loadOnlineRoomConfigIfAvailable();
+    const savedRoomSettings =
+      onlineRoomConfig && onlineRoomConfig.room_settings ?
+        onlineRoomConfig.room_settings :
+        loadLocalRoomSettings(roomConfig.room_id);
+    const savedTheme =
+      onlineRoomConfig && onlineRoomConfig.theme_settings ?
+        onlineRoomConfig.theme_settings :
+        loadLocalThemeSettings(roomConfig.room_id);
 
     cellConfigState.room_id = roomConfig.room_id;
     cellConfigState.base_room_settings = getEditableRoomSettings(
@@ -27,6 +35,7 @@ async function initializeCellConfigurator() {
       cellConfigState.base_room_settings,
       savedRoomSettings
     );
+    cellConfigState.source_room_settings = savedRoomSettings || {};
     cellConfigState.current_theme = mergeThemeSettings(
       roomConfig.theme_settings,
       savedTheme
@@ -38,7 +47,9 @@ async function initializeCellConfigurator() {
     updateCellPreview();
     updateCellConfigStatus(loadedData.used_fallback ?
       "Configuracao da cartela carregada localmente. Use o servidor para ler os JSONs." :
-      "Configuracao da cartela carregada."
+      onlineRoomConfig ?
+        "Configuracao online da cartela carregada." :
+        "Configuracao da cartela carregada."
     );
   } catch (error) {
     updateCellConfigStatus(error.message);
@@ -213,7 +224,10 @@ function handleCellConfigInput(event) {
 function handleCellConfigSave(event) {
   event.preventDefault();
 
-  const savedRoomSettings = loadLocalRoomSettings(cellConfigState.room_id) || {};
+  const savedRoomSettings =
+    loadLocalRoomSettings(cellConfigState.room_id) ||
+    cellConfigState.source_room_settings ||
+    {};
   const nextRoomSettings = Object.assign({}, savedRoomSettings, {
     board: Object.assign(
       {},
@@ -224,6 +238,7 @@ function handleCellConfigSave(event) {
 
   saveLocalRoomSettings(cellConfigState.room_id, nextRoomSettings);
   updateCellConfigStatus("Configuracao da cartela salva. Recarregue o jogo para aplicar.");
+  saveOnlineRoomConfigIfAvailable(nextRoomSettings, cellConfigState.current_theme);
 }
 
 /**
@@ -530,4 +545,53 @@ function loadLocalThemeSettings(roomId) {
   }
 
   return null;
+}
+
+/**
+ * Loads online room configuration when available.
+ *
+ * @returns {Promise<object|null>} Online room config or null.
+ */
+async function loadOnlineRoomConfigIfAvailable() {
+  if (
+    !window.BingoOnline ||
+    !window.BingoOnline.isOnlineSyncEnabled() ||
+    !window.BingoOnline.loadOnlineRoomConfig
+  ) {
+    return null;
+  }
+
+  try {
+    return await window.BingoOnline.loadOnlineRoomConfig();
+  } catch (error) {
+    console.warn("Could not load online room config:", error);
+    return null;
+  }
+}
+
+/**
+ * Saves room configuration online when Firestore sync is enabled.
+ *
+ * @param {object} roomSettings - Room settings.
+ * @param {object} themeSettings - Theme settings.
+ */
+function saveOnlineRoomConfigIfAvailable(roomSettings, themeSettings) {
+  if (
+    !window.BingoOnline ||
+    !window.BingoOnline.isOnlineSyncEnabled() ||
+    !window.BingoOnline.saveOnlineRoomConfig
+  ) {
+    return;
+  }
+
+  window.BingoOnline.saveOnlineRoomConfig(
+    cellConfigState.room_id,
+    roomSettings,
+    themeSettings
+  ).then(function () {
+    updateCellConfigStatus("Configuracao da cartela salva localmente e online.");
+  }).catch(function (error) {
+    updateCellConfigStatus("Cartela salva localmente, mas o envio online falhou.");
+    console.error(error);
+  });
 }
