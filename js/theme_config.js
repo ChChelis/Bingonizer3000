@@ -146,6 +146,9 @@ function renderRoomSettingsControls() {
     themeConfigState.current_room_settings.draw_settings.penalty_last_count;
   document.getElementById("text_items_input").value =
     themeConfigState.current_room_settings.text_items_raw;
+  document.getElementById("conditional_text_items_input").value =
+    themeConfigState.current_room_settings.conditional_text_items_raw;
+  renderWeekdayConditionControls();
   document.getElementById("number_range_start_input").value =
     themeConfigState.current_room_settings.number_range.start;
   document.getElementById("number_range_end_input").value =
@@ -218,12 +221,14 @@ function bindThemeConfiguratorEvents() {
   const configForm = document.getElementById("config_form");
   const resetConfigButton = document.getElementById("reset_config_button");
   const clearImageItemsButton = document.getElementById("clear_image_items_button");
+  const sendShoutoutButton = document.getElementById("send_shoutout_button");
 
   configForm.addEventListener("input", handleConfigInput);
   configForm.addEventListener("change", handleConfigChange);
   configForm.addEventListener("submit", handleConfigSave);
   resetConfigButton.addEventListener("click", handleConfigReset);
   clearImageItemsButton.addEventListener("click", handleClearImageItems);
+  sendShoutoutButton.addEventListener("click", handleSendShoutout);
 }
 
 /**
@@ -271,6 +276,16 @@ function handleRoomSettingsInput(event) {
   if (target.id === "text_items_input") {
     themeConfigState.current_room_settings.text_items_raw = target.value;
     updateCellPreview();
+  }
+
+  if (target.id === "conditional_text_items_input") {
+    themeConfigState.current_room_settings.conditional_text_items_raw = target.value;
+    updateCellPreview();
+  }
+
+  if (target.classList.contains("weekday_condition_input")) {
+    themeConfigState.current_room_settings.conditional_text_weekdays =
+      getSelectedConditionalWeekdays();
   }
 
   if (target.name === "content_mode") {
@@ -357,6 +372,38 @@ function handleRoomSettingsInput(event) {
   updateCheckboxSetting(target, "victory_column_input", "victory_rules", "column");
   updateCheckboxSetting(target, "victory_diagonal_input", "victory_rules", "diagonal");
   updateCheckboxSetting(target, "victory_full_board_input", "victory_rules", "full_board");
+}
+
+/**
+ * Sends a one-off online shoutout to open player pages.
+ */
+function handleSendShoutout() {
+  const messageInput = document.getElementById("shoutout_message_input");
+  const message = messageInput.value.trim();
+
+  if (!message) {
+    updateConfigStatus("Digite uma mensagem antes de enviar o shoutout.");
+    return;
+  }
+
+  if (
+    !window.BingoOnline ||
+    !window.BingoOnline.isOnlineSyncEnabled() ||
+    !window.BingoOnline.sendOnlineShoutout
+  ) {
+    updateConfigStatus("Shoutout online indisponivel nesta pagina.");
+    return;
+  }
+
+  window.BingoOnline.sendOnlineShoutout(themeConfigState.room_id, message)
+    .then(function () {
+      messageInput.value = "";
+      updateConfigStatus("Shoutout enviado para jogadores com a pagina aberta.");
+    })
+    .catch(function (error) {
+      updateConfigStatus("Nao foi possivel enviar o shoutout online.");
+      console.error(error);
+    });
 }
 
 /**
@@ -489,6 +536,8 @@ function normalizeContentModeSettings(roomSettings) {
   roomSettings.draw_settings.penalty_items = getTextItemsFromRaw(
     roomSettings.draw_settings.penalty_items_raw || ""
   );
+  roomSettings.conditional_text_weekdays =
+    normalizeWeekdayList(roomSettings.conditional_text_weekdays);
 
   return roomSettings;
 }
@@ -719,6 +768,8 @@ function getEditableRoomSettings(roomConfig, items) {
     },
     content_mode: getBaseContentMode(roomConfig.content_settings),
     text_items_raw: getTextItemsRaw(items),
+    conditional_text_items_raw: "",
+    conditional_text_weekdays: [],
     number_range: getNumberRangeFromItems(items),
     image_items: getImageItemsFromLoadedItems(items),
     draw_settings: {
@@ -782,6 +833,16 @@ function mergeRoomSettings(baseSettings, localSettings) {
     mergedSettings.text_items_raw = localSettings.text_items_raw;
   }
 
+  if (typeof localSettings.conditional_text_items_raw === "string") {
+    mergedSettings.conditional_text_items_raw =
+      localSettings.conditional_text_items_raw;
+  }
+
+  if (Array.isArray(localSettings.conditional_text_weekdays)) {
+    mergedSettings.conditional_text_weekdays =
+      normalizeWeekdayList(localSettings.conditional_text_weekdays);
+  }
+
   if (Array.isArray(localSettings.image_items)) {
     mergedSettings.image_items = localSettings.image_items.slice();
   }
@@ -835,6 +896,10 @@ function cloneRoomSettings(roomSettings) {
     board: Object.assign({}, roomSettings.board),
     content_mode: roomSettings.content_mode,
     text_items_raw: roomSettings.text_items_raw,
+    conditional_text_items_raw: roomSettings.conditional_text_items_raw || "",
+    conditional_text_weekdays: normalizeWeekdayList(
+      roomSettings.conditional_text_weekdays
+    ),
     number_range: Object.assign({}, roomSettings.number_range),
     image_items: roomSettings.image_items.slice(),
     draw_settings: Object.assign({}, roomSettings.draw_settings),
@@ -998,6 +1063,8 @@ function setContentMode(contentMode) {
  */
 function updateContentModeVisibility() {
   const textItemsSection = document.getElementById("text_items_section");
+  const conditionalTextItemsSection =
+    document.getElementById("conditional_text_items_section");
   const numberRangeSection = document.getElementById("number_range_section");
   const imageItemsSection = document.getElementById("image_items_section");
   const drawSettingsSection = document.getElementById("draw_settings_section");
@@ -1013,6 +1080,7 @@ function updateContentModeVisibility() {
     themeConfigState.current_room_settings.draw_settings.timer_mode === "random";
 
   setElementHidden(textItemsSection, isNumberMode);
+  setElementHidden(conditionalTextItemsSection, isNumberMode);
   setElementHidden(numberRangeSection, !isNumberMode);
   setElementHidden(allowImagesControl, isNumberMode);
   setElementHidden(drawSettingsSection, !isNumberMode);
@@ -1293,7 +1361,56 @@ function getPreviewItemLabels() {
     return [String(range.start), String(range.end)];
   }
 
-  return getTextItemsFromRaw(themeConfigState.current_room_settings.text_items_raw);
+  return getTextItemsFromRaw(themeConfigState.current_room_settings.text_items_raw)
+    .concat(getTextItemsFromRaw(
+      themeConfigState.current_room_settings.conditional_text_items_raw || ""
+    ));
+}
+
+/**
+ * Updates weekday checkboxes from state.
+ */
+function renderWeekdayConditionControls() {
+  const selectedWeekdays = new Set(
+    normalizeWeekdayList(themeConfigState.current_room_settings.conditional_text_weekdays)
+  );
+
+  document.querySelectorAll(".weekday_condition_input").forEach(function (input) {
+    input.checked = selectedWeekdays.has(Number(input.value));
+  });
+}
+
+/**
+ * Reads selected weekdays from the condition controls.
+ *
+ * @returns {number[]} Selected weekdays.
+ */
+function getSelectedConditionalWeekdays() {
+  return Array.from(document.querySelectorAll(".weekday_condition_input"))
+    .filter(function (input) {
+      return input.checked;
+    })
+    .map(function (input) {
+      return Number(input.value);
+    });
+}
+
+/**
+ * Keeps weekday values inside the JavaScript Date weekday range.
+ *
+ * @param {Array} weekdays - Weekday values.
+ * @returns {number[]} Normalized weekdays.
+ */
+function normalizeWeekdayList(weekdays) {
+  if (!Array.isArray(weekdays)) {
+    return [];
+  }
+
+  return weekdays
+    .map(Number)
+    .filter(function (weekday) {
+      return Number.isInteger(weekday) && weekday >= 0 && weekday <= 6;
+    });
 }
 
 /**

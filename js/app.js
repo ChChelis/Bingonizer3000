@@ -7,6 +7,8 @@ const appState = {
   session_state: null,
   session_timer_id: null,
   online_player_id: null,
+  last_shoutout_id: null,
+  online_started_at: null,
   online_status: "Online desligado"
 };
 
@@ -186,7 +188,8 @@ function applyLocalTextItems(items, localRoomSettings) {
     return items;
   }
 
-  const textItems = parseTextItems(localRoomSettings.text_items_raw);
+  const textItems = parseTextItems(localRoomSettings.text_items_raw)
+    .concat(parseConditionalTextItems(localRoomSettings));
 
   if (textItems.length === 0) {
     return items;
@@ -197,6 +200,31 @@ function applyLocalTextItems(items, localRoomSettings) {
   });
 
   return textItems.concat(nonTextItems);
+}
+
+/**
+ * Creates text items that are allowed for the current weekday.
+ *
+ * @param {object} localRoomSettings - Saved room settings.
+ * @returns {object[]} Conditional text items.
+ */
+function parseConditionalTextItems(localRoomSettings) {
+  if (typeof localRoomSettings.conditional_text_items_raw !== "string") {
+    return [];
+  }
+
+  const allowedWeekdays = Array.isArray(localRoomSettings.conditional_text_weekdays) ?
+    localRoomSettings.conditional_text_weekdays.map(Number) :
+    [];
+
+  if (!allowedWeekdays.includes(new Date().getDay())) {
+    return [];
+  }
+
+  return parseTextItems(
+    localRoomSettings.conditional_text_items_raw,
+    "conditional_text"
+  );
 }
 
 /**
@@ -290,7 +318,9 @@ function createNumberItemsFromRange(numberRange) {
  * @param {string} textItemsRaw - One text item per line.
  * @returns {object[]} Text bingo items.
  */
-function parseTextItems(textItemsRaw) {
+function parseTextItems(textItemsRaw, idPrefix) {
+  const prefix = idPrefix || "local_text";
+
   return textItemsRaw
     .split(/\r?\n/)
     .map(function (label) {
@@ -301,7 +331,7 @@ function parseTextItems(textItemsRaw) {
     })
     .map(function (label, index) {
       return {
-        id: `local_text_${String(index + 1).padStart(3, "0")}`,
+        id: `${prefix}_${String(index + 1).padStart(3, "0")}`,
         type: "text",
         label: label,
         image_url: null
@@ -578,12 +608,39 @@ function initializeOnlineRoomSession(roomConfig) {
     return;
   }
 
+  appState.online_started_at = Date.now();
+
   window.BingoOnline.startOnlineRoom({
     room_id: roomConfig.room_id,
     initial_session: appState.session_state,
     onRemoteSession: handleRemoteRoomSession,
+    onShoutout: handleOnlineShoutout,
     onStatus: setOnlineStatus
   });
+}
+
+/**
+ * Shows an online shoutout sent by the room organizer.
+ *
+ * @param {object} shoutout - Online shoutout payload.
+ */
+function handleOnlineShoutout(shoutout) {
+  if (!shoutout || !shoutout.id || shoutout.id === appState.last_shoutout_id) {
+    return;
+  }
+
+  if (
+    shoutout.sent_at &&
+    appState.online_started_at &&
+    new Date(shoutout.sent_at).getTime() < appState.online_started_at
+  ) {
+    appState.last_shoutout_id = shoutout.id;
+    return;
+  }
+
+  appState.last_shoutout_id = shoutout.id;
+  setOnlineStatus(`Aviso: ${shoutout.message}`);
+  sendShoutoutNotification(shoutout.message);
 }
 
 /**
@@ -952,6 +1009,26 @@ function sendRoundNotification() {
   new Notification(appState.room_config.title, {
     body: "Proxima rodada liberada. Entre, confira e marque sua cartela."
   });
+}
+
+/**
+ * Sends or displays a manual room shoutout.
+ *
+ * @param {string} message - Shoutout message.
+ */
+function sendShoutoutNotification(message) {
+  if (
+    "Notification" in window &&
+    Notification.permission === "granted" &&
+    !isNotificationQuietTime(appState.room_config.draw_settings)
+  ) {
+    new Notification(appState.room_config.title, {
+      body: message
+    });
+    return;
+  }
+
+  window.alert(message);
 }
 
 /**

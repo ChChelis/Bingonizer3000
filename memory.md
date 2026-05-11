@@ -447,7 +447,8 @@ session
 - número sorteado atual;
 - histórico de números sorteados;
 - jogadores que já conferiram;
-- timer compartilhado.
+- timer compartilhado;
+- shoutouts enviados pelo organizador.
 
 ## O que ainda é local
 
@@ -459,6 +460,48 @@ session
 Observação:
 
 Para que novos jogadores recebam a configuração personalizada, o configurador precisa salvar a configuração uma vez depois da versão com sincronização de `config` estar publicada. Antes disso, o Firestore tinha apenas `session`, então navegadores novos usavam o JSON base.
+
+## Separação jogador/configurador
+
+A página principal `index.html` passou a ser a tela limpa do jogador:
+
+- sem link visível para configuração;
+- sem mensagem técnica de balanceamento da cartela;
+- sem histórico local de vitórias visível.
+
+As configurações continuam acessíveis diretamente pelos links:
+
+```text
+theme_config.html
+cell_config.html
+```
+
+## Itens condicionais
+
+O configurador permite definir um grupo de textos condicionais por dia da semana.
+
+Campos salvos:
+
+```text
+conditional_text_items_raw
+conditional_text_weekdays
+```
+
+No jogo, esses itens só entram na lista de itens disponíveis quando o dia atual do navegador está entre os dias configurados.
+
+## Shoutout
+
+O configurador consegue enviar um aviso online para jogadores com a página aberta.
+
+O Firestore recebe:
+
+```text
+shoutout.id
+shoutout.message
+shoutout.sent_at
+```
+
+Jogadores com a tela aberta recebem notification do navegador quando permitido; caso contrário, recebem alerta na página.
 
 ---
 

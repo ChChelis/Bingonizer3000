@@ -10,7 +10,7 @@
   <title>Bingo Configurável</title>
 
   <!-- Main stylesheet -->
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/styles.css?v=17" />
 </head>
 <body>
   <main class="app">
@@ -24,14 +24,11 @@
       <p id="room_description" class="app_description">
         Aguarde enquanto carregamos as configurações.
       </p>
-      <nav class="app_nav" aria-label="Navegacao principal">
-        <a class="nav_link" href="theme_config.html">Configurar sala</a>
-      </nav>
     </header>
 
     <section class="game_panel" aria-label="Painel do jogo">
       <div class="status_bar">
-        <p id="board_status" class="status_text">
+        <p id="board_status" class="status_text" hidden>
           Preparando cartela...
         </p>
 
@@ -75,7 +72,7 @@
       </div>
     </section>
 
-    <section class="history_panel" aria-labelledby="victory_history_title">
+    <section class="history_panel" aria-labelledby="victory_history_title" hidden>
       <h2 id="victory_history_title" class="section_title">
         Hist&oacute;rico local de vit&oacute;rias
       </h2>
@@ -113,13 +110,13 @@
   </div>
 
   <!-- Game logic scripts -->
-  <script src="js/rules.js?v=16"></script>
-  <script src="js/board.js?v=16"></script>
-  <script src="js/assets.js?v=16"></script>
-  <script src="js/storage.js?v=16"></script>
-  <script src="js/theme.js?v=16"></script>
-  <script src="js/online_config.js?v=16"></script>
-  <script src="js/online.js?v=16"></script>
-  <script src="js/app.js?v=16"></script>
+  <script src="js/rules.js?v=17"></script>
+  <script src="js/board.js?v=17"></script>
+  <script src="js/assets.js?v=17"></script>
+  <script src="js/storage.js?v=17"></script>
+  <script src="js/theme.js?v=17"></script>
+  <script src="js/online_config.js?v=17"></script>
+  <script src="js/online.js?v=17"></script>
+  <script src="js/app.js?v=17"></script>
 </body>
 </html>

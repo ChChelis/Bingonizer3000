@@ -6,7 +6,7 @@
 
   <title>Configurar sala</title>
 
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/styles.css?v=17" />
 </head>
 <body>
   <main class="app config_app">
@@ -58,6 +58,24 @@
           <a class="secondary_button nav_button" href="cell_config.html">
             Configurar cartela
           </a>
+
+          <fieldset class="config_fieldset">
+            <legend>Shoutout da sala</legend>
+
+            <div class="theme_control">
+              <label class="theme_label" for="shoutout_message_input">Mensagem para jogadores online</label>
+              <input
+                id="shoutout_message_input"
+                class="theme_text_input"
+                type="text"
+                placeholder="Ex: Numero sorteado, confiram as cartelas"
+              />
+            </div>
+
+            <button id="send_shoutout_button" class="secondary_button compact_button" type="button">
+              Enviar shoutout
+            </button>
+          </fieldset>
 
           <fieldset id="draw_settings_section" class="config_fieldset" hidden>
             <legend>Rodadas e timer</legend>
@@ -166,6 +184,50 @@
             ></textarea>
           </div>
 
+          <fieldset id="conditional_text_items_section" class="config_fieldset">
+            <legend>Itens condicionais por dia</legend>
+
+            <div class="theme_control">
+              <label class="theme_label" for="conditional_text_items_input">Itens condicionais</label>
+              <textarea
+                id="conditional_text_items_input"
+                class="config_textarea"
+                placeholder="Digite um item por linha"
+              ></textarea>
+            </div>
+
+            <div class="weekday_grid" aria-label="Dias em que estes itens podem aparecer">
+              <label class="check_control">
+                <input class="weekday_condition_input" type="checkbox" value="0" />
+                Domingo
+              </label>
+              <label class="check_control">
+                <input class="weekday_condition_input" type="checkbox" value="1" />
+                Segunda
+              </label>
+              <label class="check_control">
+                <input class="weekday_condition_input" type="checkbox" value="2" />
+                Terca
+              </label>
+              <label class="check_control">
+                <input class="weekday_condition_input" type="checkbox" value="3" />
+                Quarta
+              </label>
+              <label class="check_control">
+                <input class="weekday_condition_input" type="checkbox" value="4" />
+                Quinta
+              </label>
+              <label class="check_control">
+                <input class="weekday_condition_input" type="checkbox" value="5" />
+                Sexta
+              </label>
+              <label class="check_control">
+                <input class="weekday_condition_input" type="checkbox" value="6" />
+                Sabado
+              </label>
+            </div>
+          </fieldset>
+
           <div id="number_range_section" class="range_grid" hidden>
             <div class="theme_control">
               <label class="theme_label" for="number_range_start_input">Numero inicial</label>
@@ -270,10 +332,10 @@
     </section>
   </main>
 
-  <script src="js/storage.js?v=16"></script>
-  <script src="js/theme.js?v=16"></script>
-  <script src="js/online_config.js?v=16"></script>
-  <script src="js/online.js?v=16"></script>
-  <script src="js/theme_config.js?v=16"></script>
+  <script src="js/storage.js?v=17"></script>
+  <script src="js/theme.js?v=17"></script>
+  <script src="js/online_config.js?v=17"></script>
+  <script src="js/online.js?v=17"></script>
+  <script src="js/theme_config.js?v=17"></script>
 </body>
 </html>

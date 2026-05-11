@@ -67,6 +67,10 @@
 
           onlineState.last_remote_session = data.session;
           options.onRemoteSession(data.session);
+
+          if (data.shoutout && options.onShoutout) {
+            options.onShoutout(data.shoutout);
+          }
         },
         function (error) {
           options.onStatus(`Online com erro: ${error.message}`);
@@ -121,6 +125,34 @@
           theme_settings: themeSettings
         },
         config_updated_at: new Date().toISOString()
+      },
+      { merge: true }
+    );
+  }
+
+  /**
+   * Publishes a room shoutout for open player pages.
+   *
+   * @param {string} roomId - Room identifier.
+   * @param {string} message - Shoutout message.
+   * @returns {Promise<void>} Resolves after Firestore accepts the write.
+   */
+  async function sendOnlineShoutout(roomId, message) {
+    if (!isOnlineSyncEnabled()) {
+      return;
+    }
+
+    const onlineRoom = await ensureOnlineRoom();
+
+    await onlineRoom.firebase.setDoc(
+      onlineRoom.document_reference,
+      {
+        room_id: roomId,
+        shoutout: {
+          id: `shoutout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          message: message,
+          sent_at: new Date().toISOString()
+        }
       },
       { merge: true }
     );
@@ -247,6 +279,7 @@
     isOnlineSyncEnabled: isOnlineSyncEnabled,
     loadOnlineRoomConfig: loadOnlineRoomConfig,
     saveOnlineRoomConfig: saveOnlineRoomConfig,
+    sendOnlineShoutout: sendOnlineShoutout,
     saveOnlineRoomSession: saveOnlineRoomSession,
     startOnlineRoom: startOnlineRoom
   };
