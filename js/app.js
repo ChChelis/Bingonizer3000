@@ -422,6 +422,7 @@ function handleNewBoardRequest() {
     appState.room_config.content_settings,
     getItemsSignature(appState.items)
   );
+  stampBoardWithToday(appState.board_state);
 
   saveBoardState(appState.room_config.room_id, appState.board_state);
 
@@ -513,6 +514,8 @@ function startGame(roomConfig, items) {
 
   if (savedBoardState && isSavedBoardCompatible(savedBoardState, roomConfig, items)) {
     appState.board_state = rehydrateBoardStateItems(savedBoardState, items);
+    stampBoardWithToday(appState.board_state);
+    saveBoardState(roomConfig.room_id, appState.board_state);
   } else {
     appState.board_state = createBoard(
       items,
@@ -522,6 +525,7 @@ function startGame(roomConfig, items) {
       roomConfig.content_settings,
       getItemsSignature(items)
     );
+    stampBoardWithToday(appState.board_state);
 
     saveBoardState(roomConfig.room_id, appState.board_state);
   }
@@ -683,30 +687,54 @@ function setOnlineStatus(statusText) {
  */
 function isSavedBoardCompatible(boardState, roomConfig, items) {
   const totalCells = roomConfig.board.rows * roomConfig.board.columns;
-  const expectedFreeCenterIndex = getFreeCenterIndex(
-    roomConfig.board.rows,
-    roomConfig.board.columns,
-    roomConfig.board.free_center
-  );
-  const expectedBalanceTypes = Boolean(
-    roomConfig.content_settings &&
-    roomConfig.content_settings.mixed_content &&
-    roomConfig.content_settings.balance_types
-  );
-  const expectedContentFilters = getContentFilterState(roomConfig.content_settings);
-  const expectedNumberLayout = isNumberContentMode(roomConfig.content_settings) ?
-    "column_ranges" :
-    null;
 
   return (
     boardState.items.length === totalCells &&
     boardState.marked_cells.length === totalCells &&
-    boardState.free_cell_index === expectedFreeCenterIndex &&
-    boardState.balance_types === expectedBalanceTypes &&
-    boardState.number_layout === expectedNumberLayout &&
-    areContentFiltersEqual(boardState.content_filters, expectedContentFilters) &&
-    boardState.item_signature === getItemsSignature(items)
+    isBoardFromToday(boardState)
   );
+}
+
+/**
+ * Adds today's date to a board so it can survive config changes during the day.
+ *
+ * @param {object} boardState - Board state.
+ */
+function stampBoardWithToday(boardState) {
+  if (!boardState.generated_on) {
+    boardState.generated_on = getLocalDateKey(new Date());
+  }
+}
+
+/**
+ * Checks whether a board can remain in use today.
+ * Older boards without a date are treated as today's board once, so this update
+ * does not erase boards already in use.
+ *
+ * @param {object} boardState - Board state.
+ * @returns {boolean} True when the board belongs to today.
+ */
+function isBoardFromToday(boardState) {
+  if (!boardState.generated_on) {
+    boardState.generated_on = getLocalDateKey(new Date());
+    return true;
+  }
+
+  return boardState.generated_on === getLocalDateKey(new Date());
+}
+
+/**
+ * Formats a local date as YYYY-MM-DD.
+ *
+ * @param {Date} date - Date object.
+ * @returns {string} Local date key.
+ */
+function getLocalDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 /**

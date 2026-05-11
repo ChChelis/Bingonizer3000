@@ -70,6 +70,7 @@ async function initializeThemeConfigurator() {
     bindThemeConfiguratorEvents();
     applyRoomTheme(themeConfigState.current_theme);
     updateRoomPreview();
+    renderShoutoutHistory();
     updateConfigStatus(
       onlineRoomConfig ?
         "Configuracao online carregada. O preview de tema muda em tempo real." :
@@ -399,11 +400,102 @@ function handleSendShoutout() {
     .then(function () {
       messageInput.value = "";
       updateConfigStatus("Shoutout enviado para jogadores com a pagina aberta.");
+      renderShoutoutHistory();
     })
     .catch(function (error) {
       updateConfigStatus("Nao foi possivel enviar o shoutout online.");
       console.error(error);
     });
+}
+
+/**
+ * Renders today's online shoutout history.
+ */
+function renderShoutoutHistory() {
+  const historyElement = document.getElementById("shoutout_history");
+
+  if (!historyElement) {
+    return;
+  }
+
+  if (
+    !window.BingoOnline ||
+    !window.BingoOnline.isOnlineSyncEnabled() ||
+    !window.BingoOnline.loadOnlineShoutoutHistory
+  ) {
+    renderShoutoutHistoryItems([]);
+    return;
+  }
+
+  window.BingoOnline.loadOnlineShoutoutHistory()
+    .then(renderShoutoutHistoryItems)
+    .catch(function (error) {
+      historyElement.innerHTML = "";
+      historyElement.appendChild(createHistoryText("Historico online indisponivel."));
+      console.error(error);
+    });
+}
+
+/**
+ * Renders shoutout history entries.
+ *
+ * @param {object[]} history - Shoutout entries.
+ */
+function renderShoutoutHistoryItems(history) {
+  const historyElement = document.getElementById("shoutout_history");
+
+  historyElement.innerHTML = "";
+
+  if (!history || history.length === 0) {
+    historyElement.appendChild(createHistoryText("Nenhum shoutout enviado hoje."));
+    return;
+  }
+
+  history.slice().reverse().forEach(function (entry) {
+    const historyItem = document.createElement("div");
+    const titleElement = document.createElement("p");
+    const metaElement = document.createElement("p");
+
+    historyItem.className = "history_item";
+    titleElement.className = "history_item_title";
+    metaElement.className = "history_item_meta";
+    titleElement.textContent = entry.message;
+    metaElement.textContent = formatShoutoutTime(entry.sent_at);
+
+    historyItem.appendChild(titleElement);
+    historyItem.appendChild(metaElement);
+    historyElement.appendChild(historyItem);
+  });
+}
+
+/**
+ * Creates a simple history message.
+ *
+ * @param {string} text - Message text.
+ * @returns {HTMLParagraphElement} Message element.
+ */
+function createHistoryText(text) {
+  const textElement = document.createElement("p");
+
+  textElement.className = "history_item_meta";
+  textElement.textContent = text;
+
+  return textElement;
+}
+
+/**
+ * Formats a shoutout timestamp.
+ *
+ * @param {string} value - ISO timestamp.
+ * @returns {string} Formatted time.
+ */
+function formatShoutoutTime(value) {
+  const date = new Date(value);
+
+  return date.toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short"
+  });
 }
 
 /**

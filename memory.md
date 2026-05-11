@@ -499,9 +499,29 @@ O Firestore recebe:
 shoutout.id
 shoutout.message
 shoutout.sent_at
+shoutout_history
+shoutout_history_date
 ```
 
 Jogadores com a tela aberta recebem notification do navegador quando permitido; caso contrário, recebem alerta na página.
+
+O configurador também mostra o histórico de shoutouts do dia, para acompanhar quais palavras/números já foram avisados. O histórico é filtrado pelo dia atual e é renovado diariamente.
+
+## Preservação de cartelas
+
+Cartelas já geradas não devem ser resetadas por alterações de configuração, novos shoutouts ou mudanças na lista de itens durante o mesmo dia.
+
+Regra atual:
+
+- se o usuário clica em gerar nova cartela, cria uma nova;
+- se o dia local vira, a próxima abertura do jogo cria uma nova cartela;
+- se a cartela salva não tinha data porque veio de versão antiga, ela é marcada como cartela de hoje e preservada.
+
+Campo salvo na cartela:
+
+```text
+generated_on
+```
 
 ---
 

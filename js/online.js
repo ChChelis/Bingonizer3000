@@ -102,6 +102,23 @@
   }
 
   /**
+   * Loads today's shoutout history from the online room document.
+   *
+   * @returns {Promise<object[]>} Shoutouts sent today.
+   */
+  async function loadOnlineShoutoutHistory() {
+    if (!isOnlineSyncEnabled()) {
+      return [];
+    }
+
+    const onlineRoom = await ensureOnlineRoom();
+    const snapshot = await onlineRoom.firebase.getDoc(onlineRoom.document_reference);
+    const data = snapshot.exists() ? snapshot.data() : null;
+
+    return getTodaysShoutouts(data && data.shoutout_history);
+  }
+
+  /**
    * Saves the room configuration online.
    *
    * @param {string} roomId - Room identifier.
@@ -143,19 +160,58 @@
     }
 
     const onlineRoom = await ensureOnlineRoom();
+    const snapshot = await onlineRoom.firebase.getDoc(onlineRoom.document_reference);
+    const data = snapshot.exists() ? snapshot.data() : null;
+    const shoutout = {
+      id: `shoutout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      message: message,
+      sent_at: new Date().toISOString()
+    };
+    const shoutoutHistory = getTodaysShoutouts(data && data.shoutout_history)
+      .concat(shoutout);
 
     await onlineRoom.firebase.setDoc(
       onlineRoom.document_reference,
       {
         room_id: roomId,
-        shoutout: {
-          id: `shoutout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-          message: message,
-          sent_at: new Date().toISOString()
-        }
+        shoutout: shoutout,
+        shoutout_history: shoutoutHistory,
+        shoutout_history_date: getLocalDateKey(new Date())
       },
       { merge: true }
     );
+  }
+
+  /**
+   * Keeps only shoutouts from the current local day.
+   *
+   * @param {object[]} history - Saved shoutout history.
+   * @returns {object[]} Today's shoutouts.
+   */
+  function getTodaysShoutouts(history) {
+    if (!Array.isArray(history)) {
+      return [];
+    }
+
+    const todayKey = getLocalDateKey(new Date());
+
+    return history.filter(function (entry) {
+      return entry && entry.sent_at && getLocalDateKey(new Date(entry.sent_at)) === todayKey;
+    });
+  }
+
+  /**
+   * Formats a local date as YYYY-MM-DD.
+   *
+   * @param {Date} date - Date object.
+   * @returns {string} Local date key.
+   */
+  function getLocalDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
   }
 
   /**
@@ -278,6 +334,7 @@
     getOnlinePlayerId: getOnlinePlayerId,
     isOnlineSyncEnabled: isOnlineSyncEnabled,
     loadOnlineRoomConfig: loadOnlineRoomConfig,
+    loadOnlineShoutoutHistory: loadOnlineShoutoutHistory,
     saveOnlineRoomConfig: saveOnlineRoomConfig,
     sendOnlineShoutout: sendOnlineShoutout,
     saveOnlineRoomSession: saveOnlineRoomSession,
