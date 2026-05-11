@@ -5,7 +5,9 @@ const appState = {
   items: [],
   board_state: null,
   session_state: null,
-  session_timer_id: null
+  session_timer_id: null,
+  online_player_id: null,
+  online_status: "Online desligado"
 };
 
 // Main entry point.
@@ -481,8 +483,10 @@ function startRoomSession(roomConfig) {
     createInitialRoomSession();
 
   normalizeRoomSessionState();
+  appState.online_player_id = getCurrentOnlinePlayerId();
   renderRoomSession();
   resumeSessionTimerIfNeeded();
+  initializeOnlineRoomSession(roomConfig);
 }
 
 /**
@@ -494,6 +498,7 @@ function createInitialRoomSession() {
   return {
     round: 1,
     ready_count: 0,
+    ready_players: {},
     player_ready: false,
     local_last_count: 0,
     latest_penalty: null,
@@ -512,6 +517,13 @@ function normalizeRoomSessionState() {
     appState.session_state.drawn_numbers = [];
   }
 
+  if (
+    !appState.session_state.ready_players ||
+    typeof appState.session_state.ready_players !== "object"
+  ) {
+    appState.session_state.ready_players = {};
+  }
+
   if (typeof appState.session_state.current_draw === "undefined") {
     appState.session_state.current_draw = null;
   }
@@ -524,6 +536,55 @@ function normalizeRoomSessionState() {
     drawNextNumber();
     saveRoomSession(appState.room_config.room_id, appState.session_state);
   }
+}
+
+/**
+ * Starts online synchronization for the room when configured.
+ *
+ * @param {object} roomConfig - Loaded room config.
+ */
+function initializeOnlineRoomSession(roomConfig) {
+  if (!window.BingoOnline) {
+    setOnlineStatus("Online desligado");
+    return;
+  }
+
+  window.BingoOnline.startOnlineRoom({
+    room_id: roomConfig.room_id,
+    initial_session: appState.session_state,
+    onRemoteSession: handleRemoteRoomSession,
+    onStatus: setOnlineStatus
+  });
+}
+
+/**
+ * Applies a remote room session snapshot.
+ *
+ * @param {object} remoteSession - Remote session state.
+ */
+function handleRemoteRoomSession(remoteSession) {
+  if (!remoteSession) {
+    return;
+  }
+
+  appState.session_state = Object.assign({}, createInitialRoomSession(), remoteSession);
+  normalizeRoomSessionState();
+  appState.session_state.player_ready =
+    Boolean(appState.session_state.ready_players[appState.online_player_id]);
+  appState.session_state.ready_count = countReadyPlayers(appState.session_state);
+  saveRoomSession(appState.room_config.room_id, appState.session_state);
+  renderRoomSession();
+  resumeSessionTimerIfNeeded();
+}
+
+/**
+ * Updates the online status shown in the game.
+ *
+ * @param {string} statusText - Status text.
+ */
+function setOnlineStatus(statusText) {
+  appState.online_status = statusText;
+  renderRoomSession();
 }
 
 /**
@@ -664,13 +725,14 @@ function handleReadyConfirmation() {
   }
 
   appState.session_state.player_ready = true;
-  appState.session_state.ready_count += 1;
+  appState.session_state.ready_players[appState.online_player_id] = true;
+  appState.session_state.ready_count = countReadyPlayers(appState.session_state);
 
   if (appState.session_state.ready_count >= getReadyTarget(drawSettings)) {
     recordLocalLastConfirmation();
   }
 
-  saveRoomSession(appState.room_config.room_id, appState.session_state);
+  persistRoomSession();
   renderRoomSession();
 
   if (shouldStartSessionTimer()) {
@@ -688,11 +750,14 @@ function handleSimulatedReadyConfirmation() {
     return;
   }
 
+  const simulatedPlayerId = `simulated_${appState.session_state.ready_count + 1}`;
+
+  appState.session_state.ready_players[simulatedPlayerId] = true;
   appState.session_state.ready_count = Math.min(
     getReadyTarget(drawSettings),
-    appState.session_state.ready_count + 1
+    countReadyPlayers(appState.session_state)
   );
-  saveRoomSession(appState.room_config.room_id, appState.session_state);
+  persistRoomSession();
   renderRoomSession();
 
   if (shouldStartSessionTimer()) {
@@ -750,7 +815,7 @@ function startSessionTimer() {
   appState.session_state.timer_started_at = now;
   appState.session_state.timer_ends_at = now + durationSeconds * 1000;
   appState.session_state.current_timer_seconds = durationSeconds;
-  saveRoomSession(appState.room_config.room_id, appState.session_state);
+  persistRoomSession();
   resumeSessionTimerIfNeeded();
   renderRoomSession();
 }
@@ -818,12 +883,13 @@ function completeSessionTimer() {
 
   appState.session_state.round += 1;
   appState.session_state.ready_count = 0;
+  appState.session_state.ready_players = {};
   appState.session_state.player_ready = false;
   appState.session_state.timer_started_at = null;
   appState.session_state.timer_ends_at = null;
   appState.session_state.current_timer_seconds = null;
   drawNextNumber();
-  saveRoomSession(appState.room_config.room_id, appState.session_state);
+  persistRoomSession();
   renderRoomSession();
   sendRoundNotification();
 }
@@ -868,6 +934,7 @@ function renderRoomSession() {
   const drawStatus = document.getElementById("session_draw_status");
   const readyStatus = document.getElementById("session_ready_status");
   const timerStatus = document.getElementById("session_timer_status");
+  const onlineStatus = document.getElementById("session_online_status");
   const readyButton = document.getElementById("ready_button");
   const simulateReadyButton = document.getElementById("simulate_ready_button");
   const notifyPermissionButton = document.getElementById("notify_permission_button");
@@ -884,16 +951,64 @@ function renderRoomSession() {
   readyStatus.textContent =
     getReadyStatusText(drawSettings);
   timerStatus.textContent = getSessionTimerText();
+  onlineStatus.textContent = appState.online_status;
   readyButton.disabled = appState.session_state.player_ready || isSessionTimerActive();
   readyButton.textContent = appState.session_state.player_ready ?
     "Cartela conferida" :
     "Conferi minha cartela";
   simulateReadyButton.disabled =
+    isOnlineSyncEnabled() ||
     isSessionTimerActive() ||
     appState.session_state.ready_count >= getReadyTarget(drawSettings);
+  simulateReadyButton.hidden = isOnlineSyncEnabled();
 
   notifyPermissionButton.hidden =
     !("Notification" in window) || Notification.permission === "granted";
+}
+
+/**
+ * Persists the room session locally and online when enabled.
+ */
+function persistRoomSession() {
+  saveRoomSession(appState.room_config.room_id, appState.session_state);
+
+  if (window.BingoOnline) {
+    window.BingoOnline.saveOnlineRoomSession(appState.session_state);
+  }
+}
+
+/**
+ * Counts ready players in a session.
+ *
+ * @param {object} sessionState - Session state.
+ * @returns {number} Ready player count.
+ */
+function countReadyPlayers(sessionState) {
+  return Object.keys(sessionState.ready_players || {}).filter(function (playerId) {
+    return Boolean(sessionState.ready_players[playerId]);
+  }).length;
+}
+
+/**
+ * Gets a stable online player id.
+ *
+ * @returns {string} Player id.
+ */
+function getCurrentOnlinePlayerId() {
+  if (window.BingoOnline) {
+    return window.BingoOnline.getOnlinePlayerId();
+  }
+
+  return "local_player";
+}
+
+/**
+ * Checks if online sync is currently enabled.
+ *
+ * @returns {boolean} True when online sync is enabled.
+ */
+function isOnlineSyncEnabled() {
+  return Boolean(window.BingoOnline && window.BingoOnline.isOnlineSyncEnabled());
 }
 
 /**

@@ -107,6 +107,8 @@ bingo_project/
 - sorteio de prenda quando o jogador local for o último a confirmar X vezes.
 - cartela numérica aleatória por faixas de coluna.
 - sorteio local de números por rodada no modo numérico.
+- camada online mínima opcional via Firebase Firestore.
+- sincronização online de rodada, número sorteado, confirmações e timer.
 
 ---
 
@@ -153,6 +155,9 @@ Persistimos:
 - células marcadas;
 - histórico local de vitórias;
 - sessão local da sala: rodada, conferências e timer em andamento.
+
+Quando `js/online_config.js` estiver habilitado, a sessão da sala também pode ser sincronizada em Firestore.
+As cartelas e marcações ainda continuam locais em cada navegador nesta primeira camada online.
 
 ---
 
@@ -239,6 +244,34 @@ O timer pode ser:
 
 As notificações podem ser bloqueadas em um período do dia, por exemplo, das 22:00 às 08:00.
 Prendas são configuradas por sala e sorteadas quando o jogador local for o último a confirmar a cartela X vezes.
+
+## Camada online mínima
+
+Arquivos:
+
+```text
+js/online_config.js
+js/online.js
+ONLINE_SETUP.md
+```
+
+Objetivo:
+
+```text
+- manter o app funcionando offline por padrão;
+- permitir sincronização opcional via Firebase Firestore;
+- sincronizar sala numérica real entre computadores diferentes;
+- compartilhar número sorteado, rodada, confirmações e timer.
+```
+
+Ainda não sincroniza:
+
+```text
+- cartelas individuais;
+- marcações de cada jogador;
+- usuários autenticados;
+- ranking ou placar.
+```
 
 ## Cartela numérica
 
@@ -540,6 +573,7 @@ O MVP já possui:
 [x] Sorteio local de números por rodada
 [x] Configuração específica aparece conforme o modo selecionado
 [x] Configuração de cartela/célula em página separada
+[x] Camada online mínima opcional com Firestore
 ```
 
 Observação técnica:
