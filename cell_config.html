@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Configurar cartela</title>
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="app config_app">
+    <header class="app_header">
+      <p class="app_eyebrow">Configurador</p>
+
+      <h1 class="app_title">Configurar cartela</h1>
+
+      <p id="cell_config_status" class="app_description">
+        Carregando configura&ccedil;&otilde;es.
+      </p>
+
+      <div class="header_actions">
+        <button class="primary_button header_save_button" type="submit" form="cell_config_form">
+          Salvar cartela
+        </button>
+        <button
+          id="reset_cell_config_button"
+          class="secondary_button icon_button"
+          type="button"
+          aria-label="Usar configuracao base"
+          title="Usar configuracao base"
+        >
+          <img src="assets/icons/trash-arrow-up.svg" alt="" aria-hidden="true" />
+        </button>
+      </div>
+
+      <nav class="app_nav" aria-label="Navegacao principal">
+        <a class="nav_link" href="theme_config.html">Configurar sala</a>
+        <a class="nav_link" href="index.html">Voltar ao jogo</a>
+      </nav>
+    </header>
+
+    <section class="config_layout" aria-label="Configurador de cartela">
+      <form id="cell_config_form" class="config_panel">
+        <section class="config_section" aria-labelledby="cell_settings_title">
+          <h2 id="cell_settings_title" class="section_title">Cartela e c&eacute;lulas</h2>
+
+          <fieldset class="config_fieldset">
+            <legend>Cartela</legend>
+
+            <label class="check_control">
+              <input id="free_center_input" type="checkbox" />
+              Casa livre central
+            </label>
+
+            <div class="theme_control">
+              <label class="theme_label" for="cell_padding_input">Padding da celula</label>
+              <input id="cell_padding_input" class="theme_text_input" type="number" min="0" max="40" step="1" />
+            </div>
+          </fieldset>
+        </section>
+      </form>
+
+      <section class="preview_panel" aria-label="Preview da cartela">
+        <div>
+          <p class="app_eyebrow">Preview</p>
+          <h2 class="section_title">C&eacute;lula da cartela</h2>
+          <p class="history_item_meta">Amostra com o maior texto ou n&uacute;mero configurado.</p>
+        </div>
+
+        <div class="cell_preview_box">
+          <button id="single_cell_preview" class="bingo_cell is_marked" type="button">
+            Texto maior da cartela
+          </button>
+        </div>
+
+        <div class="preview_board">
+          <button class="bingo_cell is_marked" type="button">Casa marcada</button>
+          <button class="bingo_cell" type="button">Casa normal</button>
+          <button class="bingo_cell is_free_cell" type="button">Casa livre</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="js/storage.js?v=14"></script>
+  <script src="js/theme.js?v=14"></script>
+  <script src="js/cell_config.js?v=14"></script>
+</body>
+</html>

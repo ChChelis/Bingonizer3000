@@ -1,0 +1,82 @@
+{
+  "room_id": "sample_room_001",
+  "title": "Bingo Corporativo",
+  "description": "Um bingo de situações comuns do ambiente de trabalho.",
+  "version": "0.1.0",
+
+  "game_mode": "manual_marking",
+
+  "board": {
+    "rows": 5,
+    "columns": 5,
+    "free_center": true,
+    "cell_padding_px": 8
+  },
+
+  "victory_rules": {
+    "line": true,
+    "column": true,
+    "diagonal": true,
+    "full_board": false
+  },
+
+  "content_settings": {
+    "allow_numbers": true,
+    "allow_text": true,
+    "allow_images": true,
+    "mixed_content": true,
+    "balance_types": true
+  },
+
+  "data_source": {
+    "type": "json",
+    "items_file": "data/sample_items.json"
+  },
+
+  "draw_settings": {
+    "enabled": false,
+    "mode": "timer",
+    "timer_mode": "random",
+    "interval_seconds": 30,
+    "random_min_seconds": 15,
+    "random_max_seconds": 90,
+    "requires_all_players_ready": false,
+    "ready_target": 1,
+    "quiet_hours_enabled": false,
+    "quiet_start": "22:00",
+    "quiet_end": "08:00",
+    "penalty_last_count": 3,
+    "penalty_items": []
+  },
+
+  "audio_settings": {
+    "enabled": true,
+    "draw_sound": null,
+    "victory_sound": "assets/sounds/victory.ogg"
+  },
+
+  "theme_settings": {
+    "page_background": "#babaca",
+    "surface_background": "#ffffff",
+    "text_color": "#1f2933",
+    "muted_text_color": "#4b5563",
+    "subtle_text_color": "#6b7280",
+    "border_color": "#d1d5db",
+    "soft_border_color": "#e5e7eb",
+    "status_background": "#f3f4f6",
+    "primary_color": "#2563eb",
+    "primary_hover_color": "#1d4ed8",
+    "primary_border_color": "#1e40af",
+    "free_cell_background": "#f2c94c",
+    "free_cell_border": "#d9a900",
+    "modal_overlay": "rgba(17, 24, 39, 0.56)",
+    "shadow_color": "rgba(15, 23, 42, 0.06)",
+    "modal_shadow_color": "rgba(15, 23, 42, 0.22)"
+  },
+
+  "publication_settings": {
+    "is_published": false,
+    "public_slug": "bingo_corporativo",
+    "session_hash": "sample_hash_abc123"
+  }
+}

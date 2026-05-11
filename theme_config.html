@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Configurar sala</title>
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="app config_app">
+    <header class="app_header">
+      <p class="app_eyebrow">Configurador</p>
+
+      <h1 class="app_title">Configurar sala</h1>
+
+      <p id="config_status" class="app_description">
+        Carregando configura&ccedil;&otilde;es.
+      </p>
+
+      <div class="header_actions">
+        <button class="primary_button header_save_button" type="submit" form="config_form">
+          Salvar configuracao
+        </button>
+        <button
+          id="reset_config_button"
+          class="secondary_button icon_button"
+          type="button"
+          aria-label="Usar configuracao base"
+          title="Usar configuracao base"
+        >
+          <img src="assets/icons/trash-arrow-up.svg" alt="" aria-hidden="true" />
+        </button>
+      </div>
+
+      <nav class="app_nav" aria-label="Navegacao principal">
+        <a class="nav_link" href="index.html">Voltar ao jogo</a>
+        <a class="nav_link" href="cell_config.html">Configurar cartela</a>
+      </nav>
+    </header>
+
+    <section class="config_layout" aria-label="Configurador de sala">
+      <form id="config_form" class="config_panel">
+        <section class="config_section" aria-labelledby="room_settings_title">
+          <h2 id="room_settings_title" class="section_title">Sala e regras</h2>
+
+          <div class="theme_control">
+            <label class="theme_label" for="room_title_input">Titulo da sala</label>
+            <input id="room_title_input" class="theme_text_input" type="text" />
+          </div>
+
+          <div class="theme_control">
+            <label class="theme_label" for="room_description_input">Descricao</label>
+            <textarea id="room_description_input" class="config_textarea"></textarea>
+          </div>
+
+          <a class="secondary_button nav_button" href="cell_config.html">
+            Configurar cartela
+          </a>
+
+          <fieldset id="draw_settings_section" class="config_fieldset" hidden>
+            <legend>Rodadas e timer</legend>
+
+            <label class="check_control">
+              <input id="timer_enabled_input" type="checkbox" />
+              Timer da sala
+            </label>
+
+            <label class="check_control">
+              <input id="requires_ready_input" type="checkbox" />
+              Exigir conferencias
+            </label>
+
+            <label class="check_control">
+              <input id="timer_mode_fixed_input" name="timer_mode" type="radio" value="fixed" />
+              Tempo fixo
+            </label>
+
+            <label class="check_control">
+              <input id="timer_mode_random_input" name="timer_mode" type="radio" value="random" />
+              Tempo aleatorio
+            </label>
+
+            <div class="range_grid">
+              <div class="theme_control">
+                <label class="theme_label" for="ready_target_input">Conferencias necessarias</label>
+                <input id="ready_target_input" class="theme_text_input" type="number" min="1" max="50" step="1" />
+              </div>
+
+              <div id="fixed_timer_section" class="theme_control" hidden>
+                <label class="theme_label" for="timer_seconds_input">Timer em segundos</label>
+                <input id="timer_seconds_input" class="theme_text_input" type="number" min="5" max="3600" step="5" />
+              </div>
+            </div>
+
+            <div id="random_timer_section" class="range_grid" hidden>
+              <div class="theme_control">
+                <label class="theme_label" for="timer_min_seconds_input">Minimo aleatorio</label>
+                <input id="timer_min_seconds_input" class="theme_text_input" type="number" min="5" max="3600" step="5" />
+              </div>
+
+              <div class="theme_control">
+                <label class="theme_label" for="timer_max_seconds_input">Maximo aleatorio</label>
+                <input id="timer_max_seconds_input" class="theme_text_input" type="number" min="5" max="3600" step="5" />
+              </div>
+            </div>
+
+            <label class="check_control">
+              <input id="quiet_hours_enabled_input" type="checkbox" />
+              Bloquear alertas por horario
+            </label>
+
+            <div class="range_grid">
+              <div class="theme_control">
+                <label class="theme_label" for="quiet_start_input">Inicio do bloqueio</label>
+                <input id="quiet_start_input" class="theme_text_input" type="time" />
+              </div>
+
+              <div class="theme_control">
+                <label class="theme_label" for="quiet_end_input">Fim do bloqueio</label>
+                <input id="quiet_end_input" class="theme_text_input" type="time" />
+              </div>
+            </div>
+
+            <div class="theme_control">
+              <label class="theme_label" for="penalty_items_input">Prendas</label>
+              <textarea
+                id="penalty_items_input"
+                class="config_textarea"
+                placeholder="Digite uma prenda por linha"
+              ></textarea>
+            </div>
+
+            <div class="theme_control">
+              <label class="theme_label" for="penalty_last_count_input">Sortear prenda apos X atrasos</label>
+              <input id="penalty_last_count_input" class="theme_text_input" type="number" min="1" max="50" step="1" />
+            </div>
+          </fieldset>
+
+          <fieldset class="config_fieldset">
+            <legend>Modo dos itens</legend>
+
+            <label class="check_control">
+              <input id="content_mode_text_input" name="content_mode" type="radio" value="text" />
+              Texto
+            </label>
+
+            <label class="check_control">
+              <input id="content_mode_number_input" name="content_mode" type="radio" value="number" />
+              Numeros
+            </label>
+
+            <label class="check_control">
+              <input id="allow_images_input" type="checkbox" />
+              Incluir imagens
+            </label>
+          </fieldset>
+
+          <div id="text_items_section" class="theme_control">
+            <label class="theme_label" for="text_items_input">Itens de texto</label>
+            <textarea
+              id="text_items_input"
+              class="config_textarea large_textarea"
+              placeholder="Digite um item por linha"
+            ></textarea>
+          </div>
+
+          <div id="number_range_section" class="range_grid" hidden>
+            <div class="theme_control">
+              <label class="theme_label" for="number_range_start_input">Numero inicial</label>
+              <input id="number_range_start_input" class="theme_text_input" type="number" step="1" />
+            </div>
+
+            <div class="theme_control">
+              <label class="theme_label" for="number_range_end_input">Numero final</label>
+              <input id="number_range_end_input" class="theme_text_input" type="number" step="1" />
+            </div>
+          </div>
+
+          <div id="image_items_section" class="theme_control image_upload_section" hidden>
+            <label class="theme_label" for="image_items_input">Itens de imagem</label>
+            <input
+              id="image_items_input"
+              class="theme_text_input"
+              type="file"
+              accept="image/*"
+              multiple
+            />
+
+            <div id="image_items_preview" class="image_preview_grid" aria-live="polite">
+              <!-- Image previews will be generated by JavaScript -->
+            </div>
+
+            <button id="clear_image_items_button" class="secondary_button compact_button" type="button">
+              Limpar imagens
+            </button>
+          </div>
+
+          <fieldset class="config_fieldset">
+            <legend>Regras de vitoria</legend>
+
+            <label class="check_control">
+              <input id="victory_line_input" type="checkbox" />
+              Linha
+            </label>
+
+            <label class="check_control">
+              <input id="victory_column_input" type="checkbox" />
+              Coluna
+            </label>
+
+            <label class="check_control">
+              <input id="victory_diagonal_input" type="checkbox" />
+              Diagonal
+            </label>
+
+            <label class="check_control">
+              <input id="victory_full_board_input" type="checkbox" />
+              Cartela cheia
+            </label>
+          </fieldset>
+        </section>
+
+        <section class="config_section" aria-labelledby="theme_settings_title">
+          <h2 id="theme_settings_title" class="section_title">Tema</h2>
+
+          <div id="theme_controls" class="theme_controls">
+            <!-- Theme controls will be generated by JavaScript -->
+          </div>
+        </section>
+
+        <div class="config_actions"></div>
+      </form>
+
+      <section class="preview_panel" aria-label="Preview do tema">
+        <div>
+          <p class="app_eyebrow">Preview</p>
+          <h2 class="section_title preview_room_title">Bingo Corporativo</h2>
+          <p class="history_item_meta preview_room_description">
+            Um bingo de situacoes comuns do ambiente de trabalho.
+          </p>
+        </div>
+
+        <p class="status_text">Mensagem de status</p>
+        <p class="status_text is_victory">Vit&oacute;ria por linha!</p>
+
+        <div class="preview_board">
+          <button class="bingo_cell is_marked" type="button">Casa marcada</button>
+          <button class="bingo_cell" type="button">Casa normal</button>
+          <button class="bingo_cell is_free_cell" type="button">Casa livre</button>
+        </div>
+
+        <div class="cell_preview_box">
+          <p class="history_item_meta">Preview da celula</p>
+          <button id="single_cell_preview" class="bingo_cell is_marked" type="button">
+            Texto maior da cartela
+          </button>
+        </div>
+
+        <button class="secondary_button" type="button">Bot&atilde;o secund&aacute;rio</button>
+        <button class="primary_button" type="button">Bot&atilde;o principal</button>
+
+        <div class="history_item">
+          <p class="history_item_title">Vit&oacute;ria por linha - agora</p>
+          <p class="history_item_meta">Sala: Bingo Corporativo</p>
+          <p class="history_item_meta">Casas marcadas: 5</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="js/storage.js?v=14"></script>
+  <script src="js/theme.js?v=14"></script>
+  <script src="js/theme_config.js?v=14"></script>
+</body>
+</html>

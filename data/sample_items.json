@@ -1,0 +1,166 @@
+{
+  "items": [
+    {
+      "id": "item_001",
+      "type": "text",
+      "label": "Alguém disse: vamos alinhar isso depois",
+      "image_url": null
+    },
+    {
+      "id": "item_002",
+      "type": "text",
+      "label": "Uma reunião poderia ter sido um e-mail",
+      "image_url": null
+    },
+    {
+      "id": "item_003",
+      "type": "text",
+      "label": "Alguém falou: só mais cinco minutinhos",
+      "image_url": null
+    },
+    {
+      "id": "item_004",
+      "type": "text",
+      "label": "O microfone estava desligado",
+      "image_url": null
+    },
+    {
+      "id": "item_005",
+      "type": "text",
+      "label": "Alguém compartilhou a tela errada",
+      "image_url": null
+    },
+    {
+      "id": "item_006",
+      "type": "text",
+      "label": "Foi dito: vamos colocar isso no backlog",
+      "image_url": null
+    },
+    {
+      "id": "item_007",
+      "type": "text",
+      "label": "Alguém perguntou se todos conseguem ver a tela",
+      "image_url": null
+    },
+    {
+      "id": "item_008",
+      "type": "text",
+      "label": "Alguém entrou atrasado na reunião",
+      "image_url": null
+    },
+    {
+      "id": "item_009",
+      "type": "text",
+      "label": "Foi mencionado um prazo impossível",
+      "image_url": null
+    },
+    {
+      "id": "item_010",
+      "type": "text",
+      "label": "Alguém disse: precisamos ser mais ágeis",
+      "image_url": null
+    },
+    {
+      "id": "item_011",
+      "type": "text",
+      "label": "Alguém pediu para repetir a explicação",
+      "image_url": null
+    },
+    {
+      "id": "item_012",
+      "type": "text",
+      "label": "Foi usado o termo sinergia",
+      "image_url": null
+    },
+    {
+      "id": "item_013",
+      "type": "text",
+      "label": "Alguém disse: vamos falar disso offline",
+      "image_url": null
+    },
+    {
+      "id": "item_014",
+      "type": "text",
+      "label": "O sistema saiu do ar",
+      "image_url": null
+    },
+    {
+      "id": "item_015",
+      "type": "text",
+      "label": "Alguém esqueceu de anexar o arquivo",
+      "image_url": null
+    },
+    {
+      "id": "item_016",
+      "type": "text",
+      "label": "Foi dito: isso é prioridade máxima",
+      "image_url": null
+    },
+    {
+      "id": "item_017",
+      "type": "text",
+      "label": "Alguém pediu um status rápido",
+      "image_url": null
+    },
+    {
+      "id": "item_018",
+      "type": "text",
+      "label": "Alguém disse: só para dar visibilidade",
+      "image_url": null
+    },
+    {
+      "id": "item_019",
+      "type": "text",
+      "label": "A internet de alguém caiu",
+      "image_url": null
+    },
+    {
+      "id": "item_020",
+      "type": "text",
+      "label": "Alguém sugeriu marcar outra reunião",
+      "image_url": null
+    },
+    {
+      "id": "item_021",
+      "type": "text",
+      "label": "Foi dito: vamos destravar esse ponto",
+      "image_url": null
+    },
+    {
+      "id": "item_022",
+      "type": "text",
+      "label": "Alguém falou: está no radar",
+      "image_url": null
+    },
+    {
+      "id": "item_023",
+      "type": "text",
+      "label": "Foi mencionado um alinhamento estratégico",
+      "image_url": null
+    },
+    {
+      "id": "item_024",
+      "type": "text",
+      "label": "Alguém pediu para priorizar tudo",
+      "image_url": null
+    },
+    {
+      "id": "item_025",
+      "type": "text",
+      "label": "Alguém disse: depois eu vejo com calma",
+      "image_url": null
+    },
+    {
+      "id": "item_026",
+      "type": "number",
+      "label": "42",
+      "image_url": null
+    },
+    {
+      "id": "item_027",
+      "type": "image",
+      "label": "Ícone de café",
+      "image_url": "assets/images/coffee.png"
+    }
+  ]
+}
